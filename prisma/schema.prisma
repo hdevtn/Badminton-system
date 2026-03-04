@@ -1,0 +1,312 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// AUTH
+// ============================================================
+
+model User {
+  id        String   @id @default(cuid())
+  phone     String   @unique @db.VarChar(50)
+  name      String?  @db.VarChar(100)
+  zaloId    String?  @unique @map("zalo_id") @db.VarChar(100)
+  avatarUrl String?  @map("avatar_url") @db.VarChar(500)
+  role      Role     @default(MEMBER)
+  status    UserStatus @default(ACTIVE)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  authLogs  AuthLog[]
+  player    Player?
+
+  @@map("users")
+}
+
+model AuthLog {
+  id        String   @id @default(cuid())
+  userId    String?  @map("user_id")
+  phone     String   @db.VarChar(20)
+  ip        String   @db.VarChar(45)
+  userAgent String?  @map("user_agent") @db.Text
+  action    AuthAction
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([phone])
+  @@map("auth_logs")
+}
+
+// ============================================================
+// CORE
+// ============================================================
+
+model Player {
+  id              String     @id @default(cuid())
+  userId          String?    @unique @map("user_id")
+  fullName        String     @map("full_name") @db.VarChar(100)
+  type            PlayerType @default(FIXED)
+  guestFeeOverride Decimal?  @map("guest_fee_override") @db.Decimal(12, 2)
+  active          Boolean    @default(true)
+  createdAt       DateTime   @default(now()) @map("created_at")
+
+  user        User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  attendances Attendance[]
+  charges     Charge[]
+  invoices    Invoice[]
+
+  @@map("players")
+}
+
+model Court {
+  id              String   @id @default(cuid())
+  name            String   @db.VarChar(100)
+  location        String?  @db.VarChar(255)
+  description     String?  @db.Text
+  passEnabled     Boolean  @default(false) @map("pass_enabled")
+  maxCheckin      Int      @default(8) @map("max_checkin")
+  defaultCourtFee Decimal  @default(0) @map("default_court_fee") @db.Decimal(12, 2)
+  hourlyRate      Decimal  @default(0) @map("hourly_rate") @db.Decimal(12, 2)
+  active          Boolean  @default(true)
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  schedules MonthlySchedule[]
+  sessions  Session[]
+
+  @@map("courts")
+}
+
+model MonthlySchedule {
+  id        String   @id @default(cuid())
+  courtId   String   @map("court_id")
+  month     Int
+  year      Int
+  rulesJson Json     @map("rules_json")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  court Court @relation(fields: [courtId], references: [id], onDelete: Cascade)
+
+  @@unique([courtId, month, year])
+  @@map("monthly_schedules")
+}
+
+model Session {
+  id          String        @id @default(cuid())
+  courtId     String        @map("court_id")
+  startAt     DateTime      @map("start_at")
+  endAt       DateTime      @map("end_at")
+  courtFee    Decimal       @default(0) @map("court_fee") @db.Decimal(12, 2)
+  shuttleFee  Decimal       @default(0) @map("shuttle_fee") @db.Decimal(12, 2)
+  passStatus  PassStatus    @default(NONE) @map("pass_status")
+  remindAt    DateTime?     @map("remind_at")
+  status      SessionStatus @default(OPEN)
+  createdAt   DateTime      @default(now()) @map("created_at")
+
+  court       Court          @relation(fields: [courtId], references: [id], onDelete: Cascade)
+  attendances Attendance[]
+  charges     Charge[]
+  invoiceItems InvoiceItem[]
+
+  @@index([courtId])
+  @@index([startAt])
+  @@map("sessions")
+}
+
+model Attendance {
+  id        String   @id @default(cuid())
+  sessionId String   @map("session_id")
+  playerId  String   @map("player_id")
+  attending Boolean  @default(false)
+  checkinAt DateTime? @map("checkin_at")
+  createdBy String?  @map("created_by")
+
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  player  Player  @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, playerId])
+  @@map("attendances")
+}
+
+// ============================================================
+// BILLING
+// ============================================================
+
+model Charge {
+  id            String     @id @default(cuid())
+  sessionId     String     @map("session_id")
+  playerId      String     @map("player_id")
+  type          ChargeType
+  amountDecimal Decimal    @map("amount_decimal") @db.Decimal(12, 2)
+  metaJson      Json?      @map("meta_json")
+  createdAt     DateTime   @default(now()) @map("created_at")
+
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  player  Player  @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@index([playerId])
+  @@map("charges")
+}
+
+model Invoice {
+  id               String        @id @default(cuid())
+  playerId         String        @map("player_id")
+  periodYyyyMm     String        @map("period_yyyymm") @db.VarChar(7)
+  totalDecimal     Decimal       @map("total_decimal") @db.Decimal(12, 2)
+  status           InvoiceStatus @default(UNPAID)
+  vietqrPayloadJson Json?        @map("vietqr_payload_json")
+  createdAt        DateTime      @default(now()) @map("created_at")
+
+  player       Player        @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  invoiceItems InvoiceItem[]
+  payments     Payment[]
+
+  @@index([playerId])
+  @@index([periodYyyyMm])
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id            String  @id @default(cuid())
+  invoiceId     String  @map("invoice_id")
+  sessionId     String  @map("session_id")
+  amountDecimal Decimal @map("amount_decimal") @db.Decimal(12, 2)
+  breakdownJson Json?   @map("breakdown_json")
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@map("invoice_items")
+}
+
+model Payment {
+  id            String        @id @default(cuid())
+  invoiceId     String        @map("invoice_id")
+  amountDecimal Decimal       @map("amount_decimal") @db.Decimal(12, 2)
+  method        PaymentMethod @default(MANUAL)
+  paidAt        DateTime      @default(now()) @map("paid_at")
+  refCode       String?       @map("ref_code") @db.VarChar(100)
+  status        PaymentStatus @default(SUCCESS)
+  note          String?       @db.VarChar(500)
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+  @@map("payments")
+}
+
+model PaymentLog {
+  id          String   @id @default(cuid())
+  playerId    String?  @map("player_id")
+  invoiceId   String?  @map("invoice_id")
+  action      String   @db.VarChar(50)
+  amount      Decimal? @db.Decimal(12, 2)
+  method      String?  @db.VarChar(20)
+  refCode     String?  @map("ref_code") @db.VarChar(100)
+  status      String   @db.VarChar(20)
+  errorMsg    String?  @map("error_msg") @db.Text
+  ip          String?  @db.VarChar(45)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([playerId])
+  @@index([invoiceId])
+  @@index([createdAt])
+  @@map("payment_logs")
+}
+
+// ============================================================
+// SETTINGS / LOGS
+// ============================================================
+
+model Setting {
+  key       String   @id @db.VarChar(100)
+  valueJson Json     @map("value_json")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("settings")
+}
+
+model IntegrationLog {
+  id          String   @id @default(cuid())
+  type        IntegrationType
+  payloadJson Json     @map("payload_json")
+  status      String   @db.VarChar(50)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("integration_logs")
+}
+
+// ============================================================
+// ENUMS
+// ============================================================
+
+enum Role {
+  ADMIN
+  MEMBER
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum AuthAction {
+  LOGIN
+  LOGOUT
+  OTP_REQUEST
+  OTP_VERIFY
+  ZALO_LOGIN
+}
+
+enum PlayerType {
+  FIXED
+  GUEST
+}
+
+enum PassStatus {
+  NONE
+  TRYING
+  SUCCESS
+  FAILED
+}
+
+enum SessionStatus {
+  OPEN
+  CLOSED
+}
+
+enum ChargeType {
+  GUEST
+  FIXED
+  ADJUSTMENT
+  DELTA
+}
+
+enum InvoiceStatus {
+  UNPAID
+  PARTIAL
+  PAID
+}
+
+enum PaymentMethod {
+  VIETQR
+  MANUAL
+}
+
+enum PaymentStatus {
+  SUCCESS
+  FAILED
+  PENDING
+}
+
+enum IntegrationType {
+  ZALO
+  VIETQR
+}
