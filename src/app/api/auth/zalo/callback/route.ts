@@ -138,7 +138,11 @@ export async function GET(req: NextRequest) {
 
         logger.info("zalo-callback", `Đăng nhập Zalo thành công: userId=${user.id}, quyền=${user.role}`);
 
-        // Chuyển hướng về trang chính theo vai trò
+        // Chuyển hướng - nếu phone là placeholder (zalo_xxx) thì yêu cầu nhập SĐT
+        const needsPhone = user.phone.startsWith("zalo_");
+        if (needsPhone) {
+            return NextResponse.redirect(`${appUrl}/complete-profile`);
+        }
         const redirectUrl = user.role === "ADMIN" ? "/admin/dashboard" : "/calendar";
         return NextResponse.redirect(`${appUrl}${redirectUrl}`);
 

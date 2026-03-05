@@ -79,6 +79,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         if (!loading && !user) {
             router.replace("/login");
         }
+        // Redirect Zalo users without real phone to complete-profile
+        if (!loading && user && user.phone.startsWith("zalo_")) {
+            router.replace("/complete-profile");
+        }
     }, [user, loading, router]);
 
     if (loading) {
