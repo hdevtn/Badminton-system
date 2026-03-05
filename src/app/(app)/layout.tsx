@@ -23,6 +23,7 @@ import {
     Home,
     MessageCircle,
     Trophy,
+    Bell,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -74,6 +75,25 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     const router = useRouter();
     const pathname = usePathname();
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [notifCount, setNotifCount] = useState(0);
+
+    // Fetch notification count for admin
+    useEffect(() => {
+        if (user?.role === "ADMIN") {
+            fetch("/api/notifications")
+                .then(r => r.json())
+                .then(data => setNotifCount(data.pendingCount || 0))
+                .catch(() => { });
+            // Poll every 30s
+            const interval = setInterval(() => {
+                fetch("/api/notifications")
+                    .then(r => r.json())
+                    .then(data => setNotifCount(data.pendingCount || 0))
+                    .catch(() => { });
+            }, 30000);
+            return () => clearInterval(interval);
+        }
+    }, [user]);
 
     useEffect(() => {
         if (!loading && !user) {
@@ -229,10 +249,20 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     >
                         <Menu className="h-5 w-5" />
                     </Button>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-1">
                         <Image src="/logo-badminton.png" alt="Logo" width={28} height={28} className="rounded-lg" />
                         <h1 className="font-bold text-[#A5C838]">Cầu Lông Club</h1>
                     </div>
+                    {isAdmin && (
+                        <Link href="/admin/notifications" className="relative p-2">
+                            <Bell className="h-5 w-5 text-[#E3E3D7]/70" />
+                            {notifCount > 0 && (
+                                <span className="absolute top-0.5 right-0.5 w-4 h-4 bg-red-500 rounded-full text-[9px] font-bold text-white flex items-center justify-center animate-pulse">
+                                    {notifCount > 9 ? '9+' : notifCount}
+                                </span>
+                            )}
+                        </Link>
+                    )}
                 </header>
 
                 <div className="p-4 lg:p-8 max-w-7xl mx-auto animate-fade-in pb-24 lg:pb-8">

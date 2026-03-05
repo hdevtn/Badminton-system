@@ -275,6 +275,50 @@ export default function SessionDetailPage() {
                 </Card>
             </div>
 
+            {/* Nhập số cầu (Admin only) */}
+            {user?.role === "ADMIN" && (
+                <Card className="!bg-[#233630] !text-[#E3E3D7] border-[#A5C838]/15">
+                    <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-lg bg-[#A5C838]/15 flex items-center justify-center">
+                                    <DollarSign className="h-5 w-5 text-[#A5C838]" />
+                                </div>
+                                <div>
+                                    <p className="font-medium text-[#E3E3D7]">Số cầu đã đánh</p>
+                                    <p className="text-xs text-[#E3E3D7]/50">
+                                        Phí cầu = Số cầu × Giá cầu (cài đặt)
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="number"
+                                    min={0}
+                                    defaultValue={(session as any).shuttleCount || 0}
+                                    className="w-20 h-10 rounded-lg border border-[#A5C838]/20 bg-[#1a2b26] px-3 text-center text-[#A5C838] font-mono font-bold text-lg focus:outline-none focus:ring-2 focus:ring-[#046839]/30"
+                                    onBlur={async (e) => {
+                                        const count = parseInt(e.target.value) || 0;
+                                        try {
+                                            await fetch(`/api/sessions/${params.id}`, {
+                                                method: "PATCH",
+                                                headers: { "Content-Type": "application/json" },
+                                                body: JSON.stringify({ shuttleCount: count }),
+                                            });
+                                            toast(`Đã cập nhật ${count} quả cầu`);
+                                            fetchSession();
+                                        } catch {
+                                            toast("Lỗi cập nhật");
+                                        }
+                                    }}
+                                />
+                                <span className="text-xs text-[#E3E3D7]/40">quả</span>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
+
             {/* Bảng điểm danh */}
             <Card>
                 <CardHeader>

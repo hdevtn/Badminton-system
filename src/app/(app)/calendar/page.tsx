@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
-import { Button } from "@/components/ui/button";
 import {
     Calendar as CalendarIcon,
     Clock,
@@ -13,10 +12,13 @@ import {
     CheckCircle,
     Loader2,
     Zap,
+    XCircle,
+    RefreshCw,
 } from "lucide-react";
 import { formatCurrency, formatTime, formatDate } from "@/lib/utils";
 import Link from "next/link";
 import { toast } from "@/components/ui/toaster";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface Session {
     id: string;
@@ -28,6 +30,11 @@ interface Session {
     status: string;
     court: { name: string; location: string; maxCheckin: number };
     _count: { attendances: number };
+    attendances: {
+        id: string;
+        attending: boolean;
+        player: { id: string; fullName: string; type: string; userId?: string };
+    }[];
 }
 
 type SessionTimeStatus = "past" | "today" | "upcoming" | "future";
@@ -104,6 +111,10 @@ export default function CalendarPage() {
         return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
     });
 
+    // Player type change
+    const [typeChangeDialog, setTypeChangeDialog] = useState(false);
+    const [typeChangeLoading, setTypeChangeLoading] = useState(false);
+
     useEffect(() => {
         fetchSessions();
     }, [currentMonth]);
@@ -121,6 +132,14 @@ export default function CalendarPage() {
         }
     }
 
+    // Kiểm tra user đã điểm danh session nào chưa
+    function isCheckedIn(session: Session): boolean {
+        if (!user) return false;
+        return session.attendances?.some(
+            a => a.attending && a.player?.userId === user.id
+        ) ?? false;
+    }
+
     async function handleQuickCheckin(sessionId: string) {
         setSelfCheckinLoading(sessionId);
         try {
@@ -131,7 +150,7 @@ export default function CalendarPage() {
             });
             const data = await res.json();
             if (res.ok) {
-                toast(data.message || "Điểm danh thành công!");
+                toast("Điểm danh thành công! 🎉");
                 fetchSessions();
             } else {
                 toast(data.error || "Điểm danh thất bại");
@@ -140,6 +159,42 @@ export default function CalendarPage() {
             toast("Lỗi kết nối");
         } finally {
             setSelfCheckinLoading(null);
+        }
+    }
+
+    // Yêu cầu đổi loại player
+    const currentPlayerType = user?.player?.type;
+    const newType = currentPlayerType === "FIXED" ? "GUEST" : "FIXED";
+    const newTypeLabel = newType === "FIXED" ? "Cố định" : "Vãng lai";
+
+    async function handleRequestTypeChange() {
+        setTypeChangeLoading(true);
+        try {
+            const res = await fetch("/api/notifications", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    type: "TYPE_CHANGE_REQUEST",
+                    title: `Yêu cầu chuyển sang ${newTypeLabel}`,
+                    message: `${user?.name || user?.player?.fullName} xin chuyển từ ${currentPlayerType === "FIXED" ? "Cố định" : "Vãng lai"} sang ${newTypeLabel}`,
+                    metaJson: {
+                        playerId: user?.player?.id,
+                        currentType: currentPlayerType,
+                        newType: newType,
+                    },
+                }),
+            });
+            if (res.ok) {
+                toast("Đã gửi yêu cầu chuyển đổi! Admin sẽ duyệt sớm. ✅");
+                setTypeChangeDialog(false);
+            } else {
+                const data = await res.json();
+                toast(data.error || "Lỗi gửi yêu cầu");
+            }
+        } catch {
+            toast("Lỗi kết nối");
+        } finally {
+            setTypeChangeLoading(false);
         }
     }
 
@@ -173,6 +228,7 @@ export default function CalendarPage() {
         const isToday = timeStatus === "today";
         const isBeige = isToday || timeStatus === "upcoming";
         const canCheckin = session.status === "OPEN" && (timeStatus === "today" || timeStatus === "upcoming");
+        const checked = isCheckedIn(session);
 
         return (
             <div key={session.id} className={`rounded-xl border p-4 transition-all duration-300 ${style.card}`}>
@@ -184,9 +240,16 @@ export default function CalendarPage() {
                             {session.court.name}
                         </span>
                     </div>
-                    <span className={`text-[10px] px-2.5 py-1 rounded-full font-medium ${style.badge}`}>
-                        {style.label}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                        {checked && (
+                            <span className="text-[10px] px-2 py-1 rounded-full font-bold bg-[#046839] text-white flex items-center gap-1">
+                                <CheckCircle className="h-3 w-3" /> Đã điểm danh
+                            </span>
+                        )}
+                        <span className={`text-[10px] px-2.5 py-1 rounded-full font-medium ${style.badge}`}>
+                            {style.label}
+                        </span>
+                    </div>
                 </div>
 
                 {/* Details */}
@@ -221,13 +284,13 @@ export default function CalendarPage() {
                         )}
                     </div>
                     <div className="flex gap-1.5">
-                        {canCheckin && (
+                        {canCheckin && !checked && (
                             <button
                                 onClick={(e) => { e.preventDefault(); handleQuickCheckin(session.id); }}
                                 disabled={selfCheckinLoading === session.id}
                                 className={`flex items-center gap-1 text-xs font-medium h-7 px-3 rounded-lg transition-all ${isToday
-                                        ? "bg-[#A5C838] text-[#233630] hover:bg-[#b5d448] shadow-md shadow-[#A5C838]/20"
-                                        : "bg-[#046839] text-[#E3E3D7] hover:bg-[#057843]"
+                                    ? "bg-[#A5C838] text-[#233630] hover:bg-[#b5d448] shadow-md shadow-[#A5C838]/20"
+                                    : "bg-[#046839] text-[#E3E3D7] hover:bg-[#057843]"
                                     } disabled:opacity-50`}
                             >
                                 {selfCheckinLoading === session.id ? (
@@ -240,10 +303,15 @@ export default function CalendarPage() {
                                 )}
                             </button>
                         )}
+                        {checked && canCheckin && (
+                            <span className="flex items-center gap-1 text-[10px] font-semibold text-[#046839] bg-[#046839]/10 h-7 px-3 rounded-lg">
+                                <CheckCircle className="h-3 w-3" /> Đã tham gia
+                            </span>
+                        )}
                         <Link href={`/sessions/${session.id}`}>
                             <button className={`text-xs h-7 px-2 rounded-lg transition-colors ${isBeige
-                                    ? "text-[#233630]/50 hover:text-[#233630] hover:bg-[#233630]/5"
-                                    : "text-[#E3E3D7]/40 hover:text-[#E3E3D7] hover:bg-[#E3E3D7]/5"
+                                ? "text-[#233630]/50 hover:text-[#233630] hover:bg-[#233630]/5"
+                                : "text-[#E3E3D7]/40 hover:text-[#E3E3D7] hover:bg-[#E3E3D7]/5"
                                 }`}>
                                 Chi tiết →
                             </button>
@@ -280,20 +348,33 @@ export default function CalendarPage() {
                     <h1 className="text-2xl font-bold text-[#E3E3D7]">Lịch sân cầu lông</h1>
                     <p className="text-[#E3E3D7]/40 text-sm">Xem lịch, điểm danh và theo dõi buổi tập</p>
                 </div>
-                <div className="flex items-center gap-2">
-                    <button
-                        onClick={() => navigateMonth(-1)}
-                        className="w-9 h-9 rounded-lg border border-[#A5C838]/15 text-[#E3E3D7]/60 hover:text-[#A5C838] hover:border-[#A5C838]/30 flex items-center justify-center transition-colors"
-                    >
-                        <ChevronLeft className="h-4 w-4" />
-                    </button>
-                    <span className="font-medium min-w-[160px] text-center capitalize text-[#E3E3D7]">{monthName}</span>
-                    <button
-                        onClick={() => navigateMonth(1)}
-                        className="w-9 h-9 rounded-lg border border-[#A5C838]/15 text-[#E3E3D7]/60 hover:text-[#A5C838] hover:border-[#A5C838]/30 flex items-center justify-center transition-colors"
-                    >
-                        <ChevronRight className="h-4 w-4" />
-                    </button>
+                <div className="flex items-center gap-3">
+                    {/* Nút chuyển đổi loại */}
+                    {user?.player && (
+                        <button
+                            onClick={() => setTypeChangeDialog(true)}
+                            className="flex items-center gap-1.5 h-9 px-3 rounded-lg border border-[#A5C838]/20 text-xs font-medium text-[#E3E3D7]/60 hover:text-[#A5C838] hover:border-[#A5C838]/40 transition-colors"
+                        >
+                            <RefreshCw className="h-3.5 w-3.5" />
+                            {currentPlayerType === "FIXED" ? "Cố định" : "Vãng lai"}
+                        </button>
+                    )}
+                    {/* Nav tháng */}
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => navigateMonth(-1)}
+                            className="w-9 h-9 rounded-lg border border-[#A5C838]/15 text-[#E3E3D7]/60 hover:text-[#A5C838] hover:border-[#A5C838]/30 flex items-center justify-center transition-colors"
+                        >
+                            <ChevronLeft className="h-4 w-4" />
+                        </button>
+                        <span className="font-medium min-w-[160px] text-center capitalize text-[#E3E3D7]">{monthName}</span>
+                        <button
+                            onClick={() => navigateMonth(1)}
+                            className="w-9 h-9 rounded-lg border border-[#A5C838]/15 text-[#E3E3D7]/60 hover:text-[#A5C838] hover:border-[#A5C838]/30 flex items-center justify-center transition-colors"
+                        >
+                            <ChevronRight className="h-4 w-4" />
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -314,6 +395,10 @@ export default function CalendarPage() {
                 <div className="flex items-center gap-1.5">
                     <div className="w-2.5 h-2.5 rounded-full bg-[#E3E3D7]/30" />
                     <span>Đã qua</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#046839] text-white font-bold">✓</span>
+                    <span>Đã điểm danh</span>
                 </div>
             </div>
 
@@ -359,6 +444,54 @@ export default function CalendarPage() {
                     )}
                 </div>
             )}
+
+            {/* Dialog chuyển đổi loại */}
+            <Dialog open={typeChangeDialog} onOpenChange={setTypeChangeDialog}>
+                <DialogContent className="max-w-sm !bg-[#233630] !text-[#E3E3D7] border-[#A5C838]/10">
+                    <DialogHeader>
+                        <DialogTitle className="text-center text-lg text-[#E3E3D7] flex items-center justify-center gap-2">
+                            <RefreshCw className="h-5 w-5 text-[#A5C838]" />
+                            Chuyển đổi loại người chơi
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <div className="bg-[#1a2b26] rounded-xl p-4 space-y-3">
+                            <div className="flex justify-between items-center">
+                                <span className="text-sm text-[#E3E3D7]/60">Hiện tại</span>
+                                <span className="font-bold text-[#A5C838]">
+                                    {currentPlayerType === "FIXED" ? "Cố định" : "Vãng lai"}
+                                </span>
+                            </div>
+                            <div className="h-px bg-[#A5C838]/10" />
+                            <div className="flex justify-between items-center">
+                                <span className="text-sm text-[#E3E3D7]/60">Chuyển sang</span>
+                                <span className="font-bold text-[#046839] bg-[#046839]/15 px-3 py-1 rounded-lg">
+                                    {newTypeLabel}
+                                </span>
+                            </div>
+                        </div>
+                        <p className="text-xs text-[#E3E3D7]/40 text-center">
+                            Yêu cầu sẽ được gửi cho Admin duyệt. Sau khi được duyệt, loại của bạn sẽ được cập nhật.
+                        </p>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setTypeChangeDialog(false)}
+                                className="flex-1 h-10 rounded-lg border border-[#A5C838]/20 text-[#E3E3D7]/70 font-medium text-sm"
+                            >
+                                Hủy
+                            </button>
+                            <button
+                                onClick={handleRequestTypeChange}
+                                disabled={typeChangeLoading}
+                                className="flex-1 h-10 rounded-lg bg-[#A5C838] text-[#233630] font-bold text-sm hover:bg-[#b5d448] disabled:opacity-50 flex items-center justify-center gap-2"
+                            >
+                                {typeChangeLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+                                Gửi yêu cầu
+                            </button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

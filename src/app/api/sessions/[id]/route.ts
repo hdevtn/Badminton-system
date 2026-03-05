@@ -67,6 +67,16 @@ export async function PATCH(
             updateData.remindAt = parsed.data.remindAt ? new Date(parsed.data.remindAt) : null;
         }
 
+        // Shuttle count → auto-calc shuttleFee from settings
+        if (parsed.data.shuttleCount !== undefined) {
+            updateData.shuttleCount = parsed.data.shuttleCount;
+            // Get shuttle price from settings
+            const shuttlePriceSetting = await prisma.setting.findUnique({ where: { key: "shuttle_price" } });
+            const pricePerShuttle = shuttlePriceSetting ? Number((shuttlePriceSetting.valueJson as any)) : 0;
+            updateData.shuttlePrice = pricePerShuttle;
+            updateData.shuttleFee = parsed.data.shuttleCount * pricePerShuttle;
+        }
+
         const session = await prisma.session.update({
             where: { id: params.id },
             data: updateData,

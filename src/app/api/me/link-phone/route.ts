@@ -13,7 +13,8 @@ import { logger } from "@/lib/logger";
 export async function POST(req: NextRequest) {
     try {
         const currentUser = await requireAuth();
-        const { phone } = await req.json();
+        const { phone, playerType } = await req.json();
+        const validType = playerType === "GUEST" ? "GUEST" : "FIXED";
 
         // Validate SĐT
         const cleanPhone = phone?.replace(/\s+/g, "").replace(/^(\+84|84)/, "0");
@@ -102,6 +103,14 @@ export async function POST(req: NextRequest) {
                 where: { id: currentDbUser.id },
                 data: { phone: cleanPhone },
             });
+
+            // Cập nhật loại player
+            if (currentDbUser.player) {
+                await prisma.player.update({
+                    where: { id: currentDbUser.player.id },
+                    data: { type: validType },
+                });
+            }
 
             // Cập nhật session
             const session = await getSession();

@@ -82,6 +82,8 @@ export const generateMonthSchema = z.object({
 export const updateSessionSchema = z.object({
     courtFee: z.number().min(0).optional(),
     shuttleFee: z.number().min(0).optional(),
+    shuttleCount: z.number().min(0).optional(),
+    shuttlePrice: z.number().min(0).optional(),
     passStatus: z.enum(["NONE", "TRYING", "SUCCESS", "FAILED"]).optional(),
     remindAt: z.string().datetime().optional().nullable(),
     status: z.enum(["OPEN", "CLOSED"]).optional(),

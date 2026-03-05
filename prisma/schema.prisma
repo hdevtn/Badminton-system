@@ -98,16 +98,18 @@ model MonthlySchedule {
 }
 
 model Session {
-  id          String        @id @default(cuid())
-  courtId     String        @map("court_id")
-  startAt     DateTime      @map("start_at")
-  endAt       DateTime      @map("end_at")
-  courtFee    Decimal       @default(0) @map("court_fee") @db.Decimal(12, 2)
-  shuttleFee  Decimal       @default(0) @map("shuttle_fee") @db.Decimal(12, 2)
-  passStatus  PassStatus    @default(NONE) @map("pass_status")
-  remindAt    DateTime?     @map("remind_at")
-  status      SessionStatus @default(OPEN)
-  createdAt   DateTime      @default(now()) @map("created_at")
+  id           String        @id @default(cuid())
+  courtId      String        @map("court_id")
+  startAt      DateTime      @map("start_at")
+  endAt        DateTime      @map("end_at")
+  courtFee     Decimal       @default(0) @map("court_fee") @db.Decimal(12, 2)
+  shuttleFee   Decimal       @default(0) @map("shuttle_fee") @db.Decimal(12, 2)
+  shuttleCount Int           @default(0) @map("shuttle_count")
+  shuttlePrice Decimal       @default(0) @map("shuttle_price") @db.Decimal(12, 2)
+  passStatus   PassStatus    @default(NONE) @map("pass_status")
+  remindAt     DateTime?     @map("remind_at")
+  status       SessionStatus @default(OPEN)
+  createdAt    DateTime      @default(now()) @map("created_at")
 
   court       Court          @relation(fields: [courtId], references: [id], onDelete: Cascade)
   attendances Attendance[]
@@ -132,6 +134,27 @@ model Attendance {
 
   @@unique([sessionId, playerId])
   @@map("attendances")
+}
+
+// ============================================================
+// NOTIFICATIONS
+// ============================================================
+
+model Notification {
+  id         String             @id @default(cuid())
+  type       NotificationType
+  fromUserId String?            @map("from_user_id")
+  playerId   String?            @map("player_id")
+  title      String             @db.VarChar(200)
+  message    String             @db.Text
+  metaJson   Json?              @map("meta_json")
+  status     NotificationStatus @default(PENDING)
+  createdAt  DateTime           @default(now()) @map("created_at")
+  resolvedAt DateTime?          @map("resolved_at")
+
+  @@index([status])
+  @@index([createdAt])
+  @@map("notifications")
 }
 
 // ============================================================
@@ -309,4 +332,17 @@ enum PaymentStatus {
 enum IntegrationType {
   ZALO
   VIETQR
+}
+
+enum NotificationType {
+  TYPE_CHANGE_REQUEST
+  CANCEL_CHECKIN
+  GENERAL
+}
+
+enum NotificationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  READ
 }

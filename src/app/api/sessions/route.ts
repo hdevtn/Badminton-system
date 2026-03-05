@@ -26,10 +26,10 @@ export async function GET(req: NextRequest) {
         const sessions = await prisma.session.findMany({
             where,
             include: {
-                court: { select: { name: true, location: true } },
+                court: { select: { name: true, location: true, maxCheckin: true } },
                 attendances: {
                     include: {
-                        player: { select: { id: true, fullName: true, type: true } },
+                        player: { select: { id: true, fullName: true, type: true, userId: true } },
                     },
                 },
                 _count: {

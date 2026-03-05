@@ -3,13 +3,14 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth-provider";
-import { Phone, Loader2, CheckCircle, AlertCircle, Smartphone } from "lucide-react";
+import { Phone, Loader2, CheckCircle, AlertCircle, Smartphone, Users, UserPlus } from "lucide-react";
 import Image from "next/image";
 
 export default function CompleteProfilePage() {
     const router = useRouter();
     const { user, refresh } = useAuth();
     const [phone, setPhone] = useState("");
+    const [playerType, setPlayerType] = useState<"FIXED" | "GUEST">("FIXED");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
@@ -51,7 +52,7 @@ export default function CompleteProfilePage() {
             const res = await fetch("/api/me/link-phone", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ phone: cleanPhone }),
+                body: JSON.stringify({ phone: cleanPhone, playerType }),
             });
             const data = await res.json();
 
@@ -100,6 +101,52 @@ export default function CompleteProfilePage() {
 
                 {/* Form */}
                 <form onSubmit={handleSubmit} className="space-y-5">
+                    {/* Chọn loại người chơi */}
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-[#E3E3D7]/70 flex items-center gap-2">
+                            <Users className="h-4 w-4 text-[#A5C838]" />
+                            Loại người chơi
+                        </label>
+                        <div className="grid grid-cols-2 gap-3">
+                            <button
+                                type="button"
+                                onClick={() => setPlayerType("FIXED")}
+                                className={`p-3 rounded-xl border-2 text-left transition-all ${playerType === "FIXED"
+                                        ? "border-[#A5C838] bg-[#A5C838]/10"
+                                        : "border-[#E3E3D7]/10 bg-[#1a2b26] hover:border-[#E3E3D7]/20"
+                                    }`}
+                            >
+                                <div className="flex items-center gap-2 mb-1">
+                                    <Users className={`h-4 w-4 ${playerType === "FIXED" ? "text-[#A5C838]" : "text-[#E3E3D7]/40"}`} />
+                                    <span className={`font-bold text-sm ${playerType === "FIXED" ? "text-[#A5C838]" : "text-[#E3E3D7]/60"}`}>
+                                        Cố định
+                                    </span>
+                                </div>
+                                <p className="text-[10px] text-[#E3E3D7]/40 leading-relaxed">
+                                    Tham gia thường xuyên, chia phí sân hàng tháng
+                                </p>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setPlayerType("GUEST")}
+                                className={`p-3 rounded-xl border-2 text-left transition-all ${playerType === "GUEST"
+                                        ? "border-[#A5C838] bg-[#A5C838]/10"
+                                        : "border-[#E3E3D7]/10 bg-[#1a2b26] hover:border-[#E3E3D7]/20"
+                                    }`}
+                            >
+                                <div className="flex items-center gap-2 mb-1">
+                                    <UserPlus className={`h-4 w-4 ${playerType === "GUEST" ? "text-[#A5C838]" : "text-[#E3E3D7]/40"}`} />
+                                    <span className={`font-bold text-sm ${playerType === "GUEST" ? "text-[#A5C838]" : "text-[#E3E3D7]/60"}`}>
+                                        Vãng lai
+                                    </span>
+                                </div>
+                                <p className="text-[10px] text-[#E3E3D7]/40 leading-relaxed">
+                                    Tham gia từng buổi, phí cố định mỗi lần
+                                </p>
+                            </button>
+                        </div>
+                    </div>
+
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-[#E3E3D7]/70 flex items-center gap-2">
                             <Smartphone className="h-4 w-4 text-[#A5C838]" />
