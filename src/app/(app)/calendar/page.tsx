@@ -79,17 +79,17 @@ function getSessionStyle(timeStatus: SessionTimeStatus, sessionStatus: string) {
             };
         case "upcoming":
             return {
-                card: "border-blue-300 dark:border-blue-600 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 shadow-md shadow-blue-100 dark:shadow-blue-900/20 hover:shadow-lg",
-                dot: "bg-blue-500",
-                badge: "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300",
+                card: "border-cyan-300 dark:border-cyan-600 bg-gradient-to-br from-cyan-50 to-sky-50 dark:from-cyan-950/20 dark:to-sky-950/20 shadow-md shadow-cyan-100 dark:shadow-cyan-900/20 hover:shadow-lg",
+                dot: "bg-cyan-500",
+                badge: "bg-cyan-100 text-cyan-700 dark:bg-cyan-900 dark:text-cyan-300",
                 label: "Sắp tới",
             };
         case "future":
         default:
             return {
                 card: "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:shadow-md",
-                dot: "bg-indigo-400",
-                badge: "bg-indigo-50 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-300",
+                dot: "bg-teal-400",
+                badge: "bg-teal-50 text-teal-600 dark:bg-teal-900/50 dark:text-teal-300",
                 label: "Lịch tới",
             };
     }
@@ -307,11 +307,11 @@ export default function CalendarPage() {
                     <span>Hôm nay</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                    <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-cyan-500" />
                     <span>Sắp tới</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                    <div className="w-2.5 h-2.5 rounded-full bg-indigo-400" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-teal-400" />
                     <span>Lịch tới</span>
                 </div>
                 <div className="flex items-center gap-1.5">
@@ -351,12 +351,12 @@ export default function CalendarPage() {
                     )}
                     {renderSection(
                         "Sắp tới (3 ngày)",
-                        <CalendarIcon className="h-4 w-4 text-blue-500" />,
+                        <CalendarIcon className="h-4 w-4 text-cyan-500" />,
                         grouped.upcoming
                     )}
                     {renderSection(
                         "Lịch trong tháng",
-                        <CalendarIcon className="h-4 w-4 text-indigo-400" />,
+                        <CalendarIcon className="h-4 w-4 text-teal-400" />,
                         grouped.future
                     )}
                     {grouped.past.length > 0 && renderSection(

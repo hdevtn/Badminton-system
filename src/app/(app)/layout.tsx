@@ -33,13 +33,12 @@ interface NavItem {
     label: string;
     href: string;
     icon: React.ReactNode;
-    mobileIcon?: React.ReactNode;
 }
 
 const memberNav: NavItem[] = [
-    { label: "Lịch sân", href: "/calendar", icon: <Calendar className="h-5 w-5" />, mobileIcon: <Calendar className="h-5 w-5" /> },
-    { label: "Tài chính", href: "/me/finance", icon: <DollarSign className="h-5 w-5" />, mobileIcon: <DollarSign className="h-5 w-5" /> },
-    { label: "Lịch sử thanh toán", href: "/me/payments", icon: <CreditCard className="h-5 w-5" />, mobileIcon: <CreditCard className="h-5 w-5" /> },
+    { label: "Lịch sân", href: "/calendar", icon: <Calendar className="h-5 w-5" /> },
+    { label: "Tài chính", href: "/me/finance", icon: <DollarSign className="h-5 w-5" /> },
+    { label: "Lịch sử thanh toán", href: "/me/payments", icon: <CreditCard className="h-5 w-5" /> },
 ];
 
 const adminNav: NavItem[] = [
@@ -54,7 +53,7 @@ const adminNav: NavItem[] = [
     { label: "Cài đặt", href: "/admin/settings", icon: <Settings className="h-5 w-5" /> },
 ];
 
-// Bottom bar items cho mobile (tối đa 5)
+// Bottom bar items mobile
 const memberBottomNav = [
     { label: "Lịch sân", href: "/calendar", icon: <Calendar className="h-5 w-5" /> },
     { label: "Tài chính", href: "/me/finance", icon: <DollarSign className="h-5 w-5" /> },
@@ -83,8 +82,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+                <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
                 <p className="ml-3 text-muted-foreground">Đang tải...</p>
             </div>
         );
@@ -104,7 +103,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     const roleLabel = user.role === "ADMIN" ? "Quản trị viên" : "Thành viên";
 
     return (
-        <div className="min-h-screen flex bg-slate-50/50 dark:bg-slate-950">
+        <div className="min-h-screen flex bg-gradient-to-br from-slate-50 via-emerald-50/30 to-teal-50/20 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
             {/* Mobile sidebar backdrop */}
             {sidebarOpen && (
                 <div
@@ -122,11 +121,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             >
                 {/* Logo */}
                 <div className="p-5 flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/25">
+                    <div className="w-11 h-11 rounded-xl gradient-brand flex items-center justify-center shadow-lg shadow-emerald-500/25">
                         <span className="text-white font-bold text-lg">🏸</span>
                     </div>
                     <div>
-                        <h2 className="font-bold text-lg leading-tight bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                        <h2 className="font-bold text-lg leading-tight text-gradient">
                             Cầu Lông Club
                         </h2>
                         <p className="text-xs text-muted-foreground">Hệ thống quản lý</p>
@@ -169,7 +168,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                                     className={cn(
                                         "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
                                         isActive
-                                            ? "bg-gradient-to-r from-blue-500/10 to-indigo-500/10 text-blue-600 dark:text-blue-400 shadow-sm border border-blue-500/10"
+                                            ? "bg-gradient-to-r from-emerald-500/10 to-teal-500/10 text-emerald-700 dark:text-emerald-400 shadow-sm border border-emerald-500/15"
                                             : "text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-foreground"
                                     )}
                                 >
@@ -184,16 +183,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
                 <Separator />
 
-                {/* Thông tin người dùng */}
+                {/* User info */}
                 <div className="p-4">
                     <div className="flex items-center gap-3 mb-3 p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center overflow-hidden">
+                        <div className="w-10 h-10 rounded-full gradient-brand flex items-center justify-center overflow-hidden">
                             {user.avatarUrl ? (
-                                <img
-                                    src={user.avatarUrl}
-                                    alt="Avatar"
-                                    className="w-full h-full object-cover"
-                                />
+                                <img src={user.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
                             ) : (
                                 <span className="text-sm font-semibold text-white">
                                     {(user.name || user.phone)?.[0]?.toUpperCase() || "U"}
@@ -217,54 +212,58 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 </div>
             </aside>
 
-            {/* Nội dung chính */}
+            {/* Main content */}
             <main className="flex-1 min-w-0">
                 {/* Mobile header */}
-                <header className="lg:hidden sticky top-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-b px-4 py-3 flex items-center gap-3 shadow-sm">
+                <header className="lg:hidden sticky top-0 z-30 glass-strong border-b px-4 py-3 flex items-center gap-3 shadow-sm">
                     <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(true)}>
                         <Menu className="h-5 w-5" />
                     </Button>
-                    <h1 className="font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                    <h1 className="font-semibold text-gradient">
                         Cầu Lông Club
                     </h1>
                 </header>
 
-                <div className="p-4 lg:p-8 max-w-7xl mx-auto animate-fade-in pb-20 lg:pb-8">
+                <div className="p-4 lg:p-8 max-w-7xl mx-auto animate-fade-in pb-24 lg:pb-8">
                     {children}
                 </div>
             </main>
 
             {/* ===== MOBILE BOTTOM BAR ===== */}
-            <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-lg border-t border-slate-200 dark:border-slate-700 safe-area-bottom">
-                <div className="flex items-center justify-around h-16 px-1">
-                    {bottomNavItems.map((item) => {
-                        const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
-                        return (
-                            <Link
-                                key={item.href}
-                                href={item.href}
-                                className={cn(
-                                    "flex flex-col items-center justify-center gap-0.5 min-w-0 flex-1 px-1 py-1 rounded-lg transition-all duration-200",
-                                    isActive
-                                        ? "text-blue-600 dark:text-blue-400"
-                                        : "text-muted-foreground hover:text-foreground"
-                                )}
-                            >
-                                <div className={cn(
-                                    "p-1 rounded-lg transition-all duration-200",
-                                    isActive && "bg-blue-100 dark:bg-blue-900/50"
-                                )}>
-                                    {item.icon}
-                                </div>
-                                <span className={cn(
-                                    "text-[10px] font-medium truncate max-w-full",
-                                    isActive && "font-semibold"
-                                )}>
-                                    {item.label}
-                                </span>
-                            </Link>
-                        );
-                    })}
+            <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 safe-area-bottom">
+                {/* Gradient top edge */}
+                <div className="h-px bg-gradient-to-r from-emerald-400/50 via-teal-400/50 to-cyan-400/50" />
+                <div className="glass-strong border-t border-slate-200/50 dark:border-slate-700/50">
+                    <div className="flex items-center justify-around h-16 px-1">
+                        {bottomNavItems.map((item) => {
+                            const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+                            return (
+                                <Link
+                                    key={item.href}
+                                    href={item.href}
+                                    className={cn(
+                                        "flex flex-col items-center justify-center gap-0.5 min-w-0 flex-1 px-1 py-1 rounded-xl transition-all duration-200",
+                                        isActive
+                                            ? "text-emerald-600 dark:text-emerald-400"
+                                            : "text-muted-foreground hover:text-foreground"
+                                    )}
+                                >
+                                    <div className={cn(
+                                        "p-1.5 rounded-xl transition-all duration-200",
+                                        isActive && "bg-emerald-100 dark:bg-emerald-900/50 shadow-sm"
+                                    )}>
+                                        {item.icon}
+                                    </div>
+                                    <span className={cn(
+                                        "text-[10px] font-medium truncate max-w-full",
+                                        isActive && "font-bold"
+                                    )}>
+                                        {item.label}
+                                    </span>
+                                </Link>
+                            );
+                        })}
+                    </div>
                 </div>
             </nav>
         </div>

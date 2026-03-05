@@ -9,13 +9,13 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "@/components/ui/toaster";
-import { Loader2, Phone, Shield, ArrowRight, MessageCircle } from "lucide-react";
+import { Loader2, Phone, Shield, ArrowRight, MessageCircle, Smartphone } from "lucide-react";
 
 export default function LoginPage() {
     return (
         <Suspense fallback={
             <div className="min-h-screen flex items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
             </div>
         }>
             <LoginContent />
@@ -32,8 +32,16 @@ function LoginContent() {
     const [otpCode, setOtpCode] = useState("");
     const [loading, setLoading] = useState(false);
     const [devCode, setDevCode] = useState<string | null>(null);
+    const [isMobile, setIsMobile] = useState(false);
 
-    // Hiển thị lỗi từ Zalo callback (nếu có)
+    // Detect mobile device
+    useEffect(() => {
+        const ua = navigator.userAgent || "";
+        const mobile = /iPhone|iPad|iPod|Android|Mobile/i.test(ua);
+        setIsMobile(mobile);
+    }, []);
+
+    // Hiển thị lỗi từ Zalo callback
     useEffect(() => {
         const error = searchParams.get("error");
         if (error) {
@@ -99,26 +107,27 @@ function LoginContent() {
         }
     };
 
-    // Chuyển hướng sang Zalo OAuth
+    // Zalo: redirect OAuth (hoạt động cả mobile và desktop)
     const handleZaloLogin = () => {
         window.location.href = "/api/auth/zalo";
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-slate-100 dark:from-slate-950 dark:via-blue-950 dark:to-slate-900 p-4">
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 dark:from-slate-950 dark:via-emerald-950/30 dark:to-slate-900 p-4">
             {/* Trang trí nền */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-400/20 rounded-full blur-3xl" />
-                <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-indigo-400/20 rounded-full blur-3xl" />
+                <div className="absolute -top-40 -right-40 w-96 h-96 bg-emerald-400/15 rounded-full blur-3xl" />
+                <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-teal-400/15 rounded-full blur-3xl" />
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-cyan-400/10 rounded-full blur-3xl" />
             </div>
 
             <div className="w-full max-w-md z-10 animate-fade-in">
-                {/* Logo / Thương hiệu */}
+                {/* Logo */}
                 <div className="text-center mb-8">
-                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl gradient-primary shadow-lg shadow-blue-500/25 mb-4">
-                        <Shield className="h-8 w-8 text-white" />
+                    <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl gradient-brand shadow-lg shadow-emerald-500/25 mb-4">
+                        <span className="text-3xl">🏸</span>
                     </div>
-                    <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                    <h1 className="text-3xl font-bold text-gradient">
                         Câu Lạc Bộ Cầu Lông
                     </h1>
                     <p className="text-muted-foreground mt-2">
@@ -126,7 +135,7 @@ function LoginContent() {
                     </p>
                 </div>
 
-                <Card className="glass border-0 shadow-xl">
+                <Card className="glass border-0 shadow-xl shadow-emerald-500/5">
                     <CardHeader className="text-center">
                         <CardTitle className="text-xl">
                             {step === "phone" ? "Đăng nhập" : "Xác thực OTP"}
@@ -145,11 +154,19 @@ function LoginContent() {
                                     type="button"
                                     onClick={handleZaloLogin}
                                     disabled={loading}
-                                    className="w-full bg-[#0068FF] hover:bg-[#0055D4] text-white font-semibold h-11 transition-all duration-200 hover:shadow-lg hover:shadow-blue-500/25"
+                                    className="w-full bg-[#0068FF] hover:bg-[#0055D4] text-white font-semibold h-12 transition-all duration-200 hover:shadow-lg hover:shadow-blue-500/25 text-base"
                                 >
                                     <MessageCircle className="mr-2 h-5 w-5" />
                                     Đăng nhập với Zalo
                                 </Button>
+
+                                {/* Gợi ý mobile */}
+                                {isMobile && (
+                                    <p className="text-xs text-center text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-1">
+                                        <Smartphone className="h-3 w-3" />
+                                        Mở ứng dụng Zalo để đăng nhập nhanh
+                                    </p>
+                                )}
 
                                 {/* Phân cách */}
                                 <div className="relative">
@@ -163,7 +180,7 @@ function LoginContent() {
                                     </div>
                                 </div>
 
-                                {/* ===== FORM ĐĂNG NHẬP SĐT ===== */}
+                                {/* ===== FORM SĐT ===== */}
                                 <form onSubmit={handlePhoneSubmit} className="space-y-4">
                                     <div className="space-y-2">
                                         <Label htmlFor="phone">Số điện thoại</Label>
@@ -175,14 +192,14 @@ function LoginContent() {
                                                 placeholder="0912345678"
                                                 value={phone}
                                                 onChange={(e) => setPhone(e.target.value)}
-                                                className="pl-10"
+                                                className="pl-10 h-11"
                                                 disabled={loading}
                                             />
                                         </div>
                                     </div>
                                     <Button
                                         type="submit"
-                                        className="w-full gradient-primary hover:opacity-90 text-white"
+                                        className="w-full gradient-primary hover:opacity-90 text-white h-11"
                                         disabled={loading || !phone.trim()}
                                     >
                                         {loading ? (
@@ -205,7 +222,7 @@ function LoginContent() {
                                         value={otpCode}
                                         onChange={(e) => setOtpCode(e.target.value)}
                                         maxLength={6}
-                                        className="text-center text-2xl tracking-widest"
+                                        className="text-center text-2xl tracking-widest h-14"
                                         disabled={loading}
                                         autoFocus
                                     />
@@ -217,7 +234,7 @@ function LoginContent() {
                                 </div>
                                 <Button
                                     type="submit"
-                                    className="w-full gradient-primary hover:opacity-90 text-white"
+                                    className="w-full gradient-primary hover:opacity-90 text-white h-11"
                                     disabled={loading || otpCode.length !== 6}
                                 >
                                     {loading ? (
