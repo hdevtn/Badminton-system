@@ -166,7 +166,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                                         "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
                                         isActive
                                             ? "bg-[#046839] text-[#A5C838] shadow-lg shadow-[#046839]/30"
-                                            : "text-[#E3E3D7]/60 hover:bg-[#233630] hover:text-[#E3E3D7]"
+                                            : "text-[rgb(247,255,220)]/70 hover:bg-[#233630] hover:text-[rgb(247,255,220)]"
                                     )}
                                 >
                                     {item.icon}

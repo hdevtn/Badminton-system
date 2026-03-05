@@ -81,21 +81,28 @@ export async function POST(req: NextRequest) {
             }
         }
 
-        // Delete existing sessions for this court/month that have no attendances
+        // Filter out sessions that already exist (avoid duplicates, don't delete old ones)
         const monthStart = new Date(year, month - 1, 1);
         const monthEnd = new Date(year, month, 1);
 
-        await prisma.session.deleteMany({
+        const existingSessions = await prisma.session.findMany({
             where: {
                 courtId,
                 startAt: { gte: monthStart, lt: monthEnd },
-                attendances: { none: {} },
             },
+            select: { startAt: true, endAt: true },
         });
 
-        // Create new sessions
+        // Only create sessions that don't already exist
+        const newSessions = sessions.filter((s) => {
+            return !existingSessions.some(
+                (e) => e.startAt.getTime() === s.startAt.getTime() && e.endAt.getTime() === s.endAt.getTime()
+            );
+        });
+
+        // Create only new sessions
         const created = await prisma.$transaction(
-            sessions.map((s) => prisma.session.create({ data: s }))
+            newSessions.map((s) => prisma.session.create({ data: s }))
         );
 
         // Schedule reminders for each session

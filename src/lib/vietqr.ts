@@ -5,7 +5,7 @@
 
 const BANK_BIN = "970423"; // Mã BIN TPBank
 const ACCOUNT_NO = "53958686888";
-const ACCOUNT_NAME = "CLUB CAU LONG";
+const ACCOUNT_NAME = "DOAN MANH HUNG";
 
 /**
  * Tạo URL hình ảnh QR từ VietQR API

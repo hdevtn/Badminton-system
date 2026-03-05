@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "@/components/ui/toaster";
 import { formatCurrency, formatDateTime, formatTime } from "@/lib/utils";
-import { Clock, MapPin, Users, DollarSign, Check, X, Loader2, UserCheck } from "lucide-react";
+import { Clock, LayoutGrid, Users, DollarSign, Check, X, Loader2, UserCheck } from "lucide-react";
 
 interface SessionDetail {
     id: string;
@@ -206,7 +206,7 @@ export default function SessionDetailPage() {
                 <Card>
                     <CardContent className="p-4 flex items-center gap-3">
                         <div className="w-10 h-10 rounded-lg bg-[#046839]/15 flex items-center justify-center">
-                            <MapPin className="h-5 w-5 text-[#046839]" />
+                            <LayoutGrid className="h-5 w-5 text-[#046839]" />
                         </div>
                         <div>
                             <p className="text-xs text-[#233630]/50">Phí sân</p>
