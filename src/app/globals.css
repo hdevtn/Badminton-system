@@ -6,53 +6,54 @@
 
 @layer base {
   :root {
-    --background: 210 20% 98%;
-    --foreground: 220 30% 12%;
-    --card: 0 0% 100%;
-    --card-foreground: 220 30% 12%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 220 30% 12%;
-    --primary: 162 72% 40%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 210 30% 95%;
-    --secondary-foreground: 220 30% 12%;
-    --muted: 210 25% 94%;
-    --muted-foreground: 215 16% 47%;
-    --accent: 170 55% 93%;
-    --accent-foreground: 162 72% 25%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 214 25% 90%;
-    --input: 214 25% 90%;
-    --ring: 162 72% 40%;
-    --radius: 0.625rem;
+    /* Brand Colors from palette */
+    /* #233630 - Dark Green (bg) */
+    /* #046839 - Rich Green (accent) */
+    /* #A5C838 - Lime Green (highlight) */
+    /* #E3E3D7 - Beige (cards) */
 
-    /* Custom brand colors */
-    --brand-primary: 162 72% 40%;
-    --brand-secondary: 199 89% 48%;
-    --brand-accent: 45 93% 58%;
+    --background: 156 20% 17%;
+    --foreground: 60 5% 90%;
+    --card: 60 5% 89%;
+    --card-foreground: 156 20% 12%;
+    --popover: 60 5% 89%;
+    --popover-foreground: 156 20% 12%;
+    --primary: 152 95% 20%;
+    --primary-foreground: 60 5% 95%;
+    --secondary: 156 20% 22%;
+    --secondary-foreground: 60 5% 90%;
+    --muted: 156 15% 25%;
+    --muted-foreground: 60 5% 65%;
+    --accent: 74 65% 50%;
+    --accent-foreground: 156 20% 12%;
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 60 5% 95%;
+    --border: 156 15% 28%;
+    --input: 156 15% 28%;
+    --ring: 152 95% 25%;
+    --radius: 0.75rem;
   }
 
   .dark {
-    --background: 220 30% 6%;
-    --foreground: 210 20% 95%;
-    --card: 220 30% 9%;
-    --card-foreground: 210 20% 95%;
-    --popover: 220 30% 9%;
-    --popover-foreground: 210 20% 95%;
-    --primary: 162 72% 45%;
-    --primary-foreground: 220 30% 6%;
-    --secondary: 220 25% 15%;
-    --secondary-foreground: 210 20% 95%;
-    --muted: 220 25% 15%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 170 40% 15%;
-    --accent-foreground: 162 72% 65%;
+    --background: 156 25% 10%;
+    --foreground: 60 5% 92%;
+    --card: 156 20% 14%;
+    --card-foreground: 60 5% 92%;
+    --popover: 156 20% 14%;
+    --popover-foreground: 60 5% 92%;
+    --primary: 74 65% 50%;
+    --primary-foreground: 156 25% 10%;
+    --secondary: 156 20% 18%;
+    --secondary-foreground: 60 5% 92%;
+    --muted: 156 20% 18%;
+    --muted-foreground: 60 5% 55%;
+    --accent: 74 65% 50%;
+    --accent-foreground: 156 25% 10%;
     --destructive: 0 63% 31%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 220 25% 15%;
-    --input: 220 25% 15%;
-    --ring: 162 72% 45%;
+    --destructive-foreground: 60 5% 95%;
+    --border: 156 15% 20%;
+    --input: 156 15% 20%;
+    --ring: 74 65% 50%;
   }
 }
 
@@ -69,31 +70,59 @@
 
 @layer utilities {
   .gradient-primary {
-    @apply bg-gradient-to-r from-emerald-500 to-teal-600;
+    background: linear-gradient(135deg, #046839 0%, #233630 100%);
   }
 
   .gradient-brand {
-    background: linear-gradient(135deg, #0d9488 0%, #0891b2 50%, #0ea5e9 100%);
+    background: linear-gradient(135deg, #046839 0%, #0a8548 50%, #A5C838 100%);
+  }
+
+  .gradient-lime {
+    background: linear-gradient(135deg, #A5C838 0%, #8ab62e 100%);
   }
 
   .gradient-card {
-    @apply bg-gradient-to-br from-white to-slate-50 dark:from-slate-800 dark:to-slate-900;
+    background: linear-gradient(145deg, #E3E3D7 0%, #d4d4c8 100%);
   }
 
   .glass {
-    @apply bg-white/80 backdrop-blur-lg border border-white/20 dark:bg-slate-900/80 dark:border-slate-700/30;
+    background: rgba(35, 54, 48, 0.85);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .glass-card {
+    background: rgba(227, 227, 215, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(227, 227, 215, 0.3);
   }
 
   .glass-strong {
-    @apply bg-white/95 backdrop-blur-xl dark:bg-slate-900/95;
+    background: rgba(35, 54, 48, 0.97);
+    backdrop-filter: blur(20px);
+  }
+
+  .card-sport {
+    background: #E3E3D7;
+    color: #233630;
+    border-radius: 0.75rem;
+    border: 1px solid rgba(35, 54, 48, 0.08);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+  }
+
+  .card-dark {
+    background: #233630;
+    color: #E3E3D7;
+    border-radius: 0.75rem;
+    border: 1px solid rgba(165, 200, 56, 0.15);
   }
 
   .animate-fade-in {
-    animation: fadeIn 0.3s ease-in-out;
+    animation: fadeIn 0.4s ease-out;
   }
 
   .animate-slide-up {
-    animation: slideUp 0.3s ease-out;
+    animation: slideUp 0.4s ease-out;
   }
 
   .animate-pulse-soft {
@@ -105,7 +134,34 @@
   }
 
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-400 dark:to-teal-400;
+    background: linear-gradient(135deg, #A5C838 0%, #8ab62e 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .text-lime {
+    color: #A5C838;
+  }
+
+  .bg-brand-dark {
+    background-color: #233630;
+  }
+
+  .bg-brand-green {
+    background-color: #046839;
+  }
+
+  .bg-brand-lime {
+    background-color: #A5C838;
+  }
+
+  .bg-brand-beige {
+    background-color: #E3E3D7;
+  }
+
+  .border-brand {
+    border-color: rgba(165, 200, 56, 0.2);
   }
 }
 
@@ -122,7 +178,7 @@
 @keyframes slideUp {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(12px);
   }
 
   to {
@@ -145,18 +201,19 @@
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-transparent;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-muted-foreground/20 rounded-full;
+  background: rgba(165, 200, 56, 0.2);
+  border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-muted-foreground/40;
+  background: rgba(165, 200, 56, 0.4);
 }
