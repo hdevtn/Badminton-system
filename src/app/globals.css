@@ -66,6 +66,10 @@
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
+
+  textarea {
+    color: rgb(171, 203, 56);
+  }
 }
 
 @layer utilities {

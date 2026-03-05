@@ -19,7 +19,7 @@ export async function GET(
                 attendances: {
                     include: {
                         player: {
-                            select: { id: true, fullName: true, type: true, guestFeeOverride: true },
+                            select: { id: true, fullName: true, type: true, guestFeeOverride: true, userId: true },
                         },
                     },
                 },

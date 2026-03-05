@@ -47,9 +47,9 @@ export default function LeaderboardPage() {
     }
 
     function getRankBg(rank: number) {
-        if (rank === 1) return "bg-gradient-to-r from-amber-400/20 to-amber-400/5 border-amber-400/30";
-        if (rank === 2) return "bg-gradient-to-r from-gray-300/15 to-gray-300/5 border-gray-300/20";
-        if (rank === 3) return "bg-gradient-to-r from-amber-600/15 to-amber-600/5 border-amber-600/20";
+        if (rank === 1) return "bg-gradient-to-r from-amber-300/40 via-yellow-200/30 to-amber-300/10 border-amber-300/50 shadow-md shadow-amber-400/20";
+        if (rank === 2) return "bg-gradient-to-r from-gray-200/20 to-gray-200/5 border-gray-300/25";
+        if (rank === 3) return "bg-gradient-to-r from-amber-600/20 to-amber-600/5 border-amber-500/25";
         return "border-[#233630]/5";
     }
 

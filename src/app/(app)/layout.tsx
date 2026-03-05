@@ -225,9 +225,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     >
                         <Menu className="h-5 w-5" />
                     </Button>
-                    <h1 className="font-bold text-[#A5C838]">
-                        🏸 Cầu Lông Club
-                    </h1>
+                    <div className="flex items-center gap-2">
+                        <Image src="/logo-badminton.png" alt="Logo" width={28} height={28} className="rounded-lg" />
+                        <h1 className="font-bold text-[#A5C838]">Cầu Lông Club</h1>
+                    </div>
                 </header>
 
                 <div className="p-4 lg:p-8 max-w-7xl mx-auto animate-fade-in pb-24 lg:pb-8">
