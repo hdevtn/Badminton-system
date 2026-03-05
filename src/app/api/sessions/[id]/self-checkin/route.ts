@@ -1,6 +1,7 @@
 /**
  * POST /api/sessions/[id]/self-checkin
  * Cho phép member tự điểm danh (toggle có mặt/vắng)
+ * Cancel: yêu cầu lý do, không cho hủy trước 1h trước khi bắt đầu
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -15,6 +16,16 @@ export async function POST(
     try {
         const currentUser = await requireAuth();
         const sessionId = params.id;
+
+        let body: { action?: string; cancelReason?: string } = {};
+        try {
+            body = await req.json();
+        } catch {
+            // no body is ok for toggle
+        }
+
+        const action = body.action || "toggle"; // "checkin" | "cancel" | "toggle"
+        const cancelReason = body.cancelReason || "";
 
         const result = await prisma.$transaction(async (tx) => {
             // Kiểm tra buổi tập tồn tại và đang mở
@@ -47,7 +58,28 @@ export async function POST(
                 },
             });
 
-            const newAttending = existingAttendance ? !existingAttendance.attending : true;
+            // Decide new state
+            let newAttending: boolean;
+            if (action === "checkin") {
+                newAttending = true;
+            } else if (action === "cancel") {
+                newAttending = false;
+
+                // Kiểm tra không được hủy trước 1h trước khi bắt đầu
+                const now = new Date();
+                const oneHourBefore = new Date(session.startAt.getTime() - 60 * 60 * 1000);
+                if (now >= oneHourBefore) {
+                    throw new Error("CANCEL_TOO_LATE");
+                }
+
+                // Yêu cầu lý do hủy
+                if (!cancelReason || cancelReason.trim().length === 0) {
+                    throw new Error("CANCEL_REASON_REQUIRED");
+                }
+            } else {
+                // toggle mode
+                newAttending = existingAttendance ? !existingAttendance.attending : true;
+            }
 
             // Kiểm tra max capacity khi điểm danh
             if (newAttending) {
@@ -86,8 +118,16 @@ export async function POST(
                 },
             });
 
-            return { attendance, attending: newAttending };
+            return { attendance, attending: newAttending, playerName: player.fullName, cancelReason };
         });
+
+        // Log cancel reason notification for admin
+        if (action === "cancel" && cancelReason) {
+            logger.warn(
+                "cancel-checkin",
+                `⚠️ ${result.playerName} hủy điểm danh buổi tập ${sessionId}. Lý do: ${cancelReason}`
+            );
+        }
 
         logger.info(
             "self-checkin",
@@ -110,6 +150,16 @@ export async function POST(
                 case "PLAYER_NOT_FOUND":
                     return NextResponse.json(
                         { error: "Bạn chưa được thêm vào danh sách người chơi. Vui lòng liên hệ quản trị viên." },
+                        { status: 400 }
+                    );
+                case "CANCEL_TOO_LATE":
+                    return NextResponse.json(
+                        { error: "Không thể hủy điểm danh trong vòng 1 giờ trước khi bắt đầu buổi tập." },
+                        { status: 400 }
+                    );
+                case "CANCEL_REASON_REQUIRED":
+                    return NextResponse.json(
+                        { error: "Vui lòng nhập lý do hủy điểm danh." },
                         { status: 400 }
                     );
             }

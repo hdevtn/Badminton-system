@@ -6,9 +6,10 @@ import { useAuth } from "@/components/auth-provider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "@/components/ui/toaster";
 import { formatCurrency, formatDateTime, formatTime } from "@/lib/utils";
-import { Clock, LayoutGrid, Users, DollarSign, Check, X, Loader2, UserCheck } from "lucide-react";
+import { Clock, LayoutGrid, Users, DollarSign, Check, X, Loader2, UserCheck, AlertTriangle } from "lucide-react";
 
 interface SessionDetail {
     id: string;
@@ -38,6 +39,9 @@ export default function SessionDetailPage() {
     const [session, setSession] = useState<SessionDetail | null>(null);
     const [loading, setLoading] = useState(true);
     const [selfCheckinLoading, setSelfCheckinLoading] = useState(false);
+    const [cancelDialog, setCancelDialog] = useState(false);
+    const [cancelReason, setCancelReason] = useState("");
+    const [cancelLoading, setCancelLoading] = useState(false);
 
     useEffect(() => {
         fetchSession();
@@ -55,18 +59,18 @@ export default function SessionDetailPage() {
         }
     }
 
-    // Tự điểm danh / hủy điểm danh cho member
-    async function handleSelfCheckin(action?: "checkin" | "cancel") {
+    // Điểm danh
+    async function handleCheckin() {
         setSelfCheckinLoading(true);
         try {
             const res = await fetch(`/api/sessions/${params.id}/self-checkin`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ action: action || "checkin" }),
+                body: JSON.stringify({ action: "checkin" }),
             });
             const data = await res.json();
             if (res.ok) {
-                toast(data.attending ? "Đã điểm danh thành công! 🎉" : "Đã hủy điểm danh");
+                toast("Đã điểm danh thành công! 🎉");
                 fetchSession();
             } else {
                 toast(data.error || "Lỗi điểm danh");
@@ -75,6 +79,48 @@ export default function SessionDetailPage() {
             toast("Lỗi kết nối");
         } finally {
             setSelfCheckinLoading(false);
+        }
+    }
+
+    // Mở dialog hủy
+    function openCancelDialog() {
+        if (!session) return;
+        // Check 1h rule client-side
+        const now = new Date();
+        const oneHourBefore = new Date(new Date(session.startAt).getTime() - 60 * 60 * 1000);
+        if (now >= oneHourBefore) {
+            toast("⚠️ Không thể hủy điểm danh trong vòng 1 giờ trước khi bắt đầu buổi tập.");
+            return;
+        }
+        setCancelReason("");
+        setCancelDialog(true);
+    }
+
+    // Submit hủy với lý do
+    async function handleCancelSubmit() {
+        if (!cancelReason.trim()) {
+            toast("Vui lòng nhập lý do hủy");
+            return;
+        }
+        setCancelLoading(true);
+        try {
+            const res = await fetch(`/api/sessions/${params.id}/self-checkin`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ action: "cancel", cancelReason: cancelReason.trim() }),
+            });
+            const data = await res.json();
+            if (res.ok) {
+                toast("Đã hủy điểm danh");
+                setCancelDialog(false);
+                fetchSession();
+            } else {
+                toast(data.error || "Lỗi hủy điểm danh");
+            }
+        } catch {
+            toast("Lỗi kết nối");
+        } finally {
+            setCancelLoading(false);
         }
     }
 
@@ -97,13 +143,17 @@ export default function SessionDetailPage() {
     }
 
     const attendingCount = session.attendances.filter((a) => a.attending).length;
-    const isAdmin = user?.role === "ADMIN";
 
-    // Kiểm tra xem user hiện tại đã điểm danh chưa
+    // Kiểm tra user đã điểm danh chưa
     const myAttendance = session.attendances.find(a => {
         return (a.player as any).userId === user?.id;
     });
     const isCheckedIn = myAttendance?.attending === true;
+
+    // Check if within 1h
+    const now = new Date();
+    const oneHourBefore = new Date(new Date(session.startAt).getTime() - 60 * 60 * 1000);
+    const cannotCancel = now >= oneHourBefore;
 
     const getChargeLabel = (type: string) => {
         switch (type) {
@@ -116,7 +166,7 @@ export default function SessionDetailPage() {
     };
 
     return (
-        <div className="space-y-6 max-w-4xl">
+        <div className="space-y-6 max-w-4xl pb-24 lg:pb-6">
             {/* Tiêu đề */}
             <div className="flex flex-col sm:flex-row justify-between gap-4">
                 <div>
@@ -127,13 +177,10 @@ export default function SessionDetailPage() {
                     <Badge variant={session.status === "OPEN" ? "success" : "secondary"}>
                         {session.status === "OPEN" ? "Đang mở" : "Đã đóng"}
                     </Badge>
-                    <Badge variant={session.passStatus === "SUCCESS" ? "success" : "outline"}>
-                        Pass: {session.passStatus === "SUCCESS" ? "Thành công" : session.passStatus === "FAILED" ? "Thất bại" : session.passStatus === "TRYING" ? "Đang thử" : "Chưa"}
-                    </Badge>
                 </div>
             </div>
 
-            {/* Nút điểm danh / hủy điểm danh */}
+            {/* Nút điểm danh / hủy */}
             {session.status === "OPEN" && (
                 <Card className="!bg-[#233630] !text-[#E3E3D7] border-[#A5C838]/15">
                     <CardContent className="p-4 flex items-center justify-between">
@@ -141,29 +188,30 @@ export default function SessionDetailPage() {
                             <UserCheck className="h-5 w-5 text-[#A5C838]" />
                             <div>
                                 <p className="font-medium text-[#E3E3D7]">
-                                    {isCheckedIn ? "Bạn đã điểm danh" : "Điểm danh buổi tập"}
+                                    {isCheckedIn ? "Bạn đã điểm danh ✅" : "Điểm danh buổi tập"}
                                 </p>
                                 <p className="text-sm text-[#E3E3D7]/50">
-                                    {isCheckedIn ? "Bấm hủy nếu không tham gia" : "Xác nhận tham gia buổi tập"}
+                                    {isCheckedIn
+                                        ? cannotCancel
+                                            ? "⚠️ Không thể hủy (dưới 1h trước giờ bắt đầu)"
+                                            : "Bấm hủy nếu không tham gia"
+                                        : "Xác nhận tham gia buổi tập"
+                                    }
                                 </p>
                             </div>
                         </div>
                         {isCheckedIn ? (
                             <button
-                                onClick={() => handleSelfCheckin("cancel")}
-                                disabled={selfCheckinLoading}
-                                className="flex items-center gap-2 h-10 px-5 rounded-lg bg-red-600 text-white font-medium hover:bg-red-700 transition-colors disabled:opacity-50"
+                                onClick={openCancelDialog}
+                                disabled={cannotCancel || selfCheckinLoading}
+                                className="flex items-center gap-2 h-10 px-5 rounded-lg bg-red-600 text-white font-medium hover:bg-red-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                             >
-                                {selfCheckinLoading ? (
-                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                    <X className="h-4 w-4" />
-                                )}
-                                Hủy điểm danh
+                                <X className="h-4 w-4" />
+                                Hủy
                             </button>
                         ) : (
                             <button
-                                onClick={() => handleSelfCheckin("checkin")}
+                                onClick={handleCheckin}
                                 disabled={selfCheckinLoading}
                                 className="flex items-center gap-2 h-10 px-5 rounded-lg bg-[#A5C838] text-[#233630] font-semibold hover:bg-[#b5d448] transition-colors shadow-lg shadow-[#A5C838]/20 disabled:opacity-50"
                             >
@@ -227,7 +275,7 @@ export default function SessionDetailPage() {
                 </Card>
             </div>
 
-            {/* Bảng điểm danh - BỎ CỘT THAO TÁC */}
+            {/* Bảng điểm danh */}
             <Card>
                 <CardHeader>
                     <CardTitle className="text-lg text-[#233630]">Điểm danh</CardTitle>
@@ -236,9 +284,9 @@ export default function SessionDetailPage() {
                     <Table>
                         <TableHeader>
                             <TableRow className="border-[#233630]/10">
-                                <TableHead className="text-[#233630]/60">Người chơi</TableHead>
-                                <TableHead className="text-[#233630]/60">Loại</TableHead>
-                                <TableHead className="text-[#233630]/60 text-center w-20">Trạng thái</TableHead>
+                                <TableHead>Người chơi</TableHead>
+                                <TableHead>Loại</TableHead>
+                                <TableHead className="text-center w-20">Trạng thái</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -286,9 +334,9 @@ export default function SessionDetailPage() {
                         <Table>
                             <TableHeader>
                                 <TableRow className="border-[#233630]/10">
-                                    <TableHead className="text-[#233630]/60">Người chơi</TableHead>
-                                    <TableHead className="text-[#233630]/60">Loại chi phí</TableHead>
-                                    <TableHead className="text-right text-[#233630]/60">Số tiền</TableHead>
+                                    <TableHead>Người chơi</TableHead>
+                                    <TableHead>Loại chi phí</TableHead>
+                                    <TableHead className="text-right">Số tiền</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -308,6 +356,45 @@ export default function SessionDetailPage() {
                     </CardContent>
                 </Card>
             )}
+
+            {/* Dialog Hủy điểm danh */}
+            <Dialog open={cancelDialog} onOpenChange={setCancelDialog}>
+                <DialogContent className="max-w-sm !bg-[#233630] !text-[#E3E3D7] border-[#A5C838]/10">
+                    <DialogHeader>
+                        <DialogTitle className="text-center text-lg text-[#E3E3D7] flex items-center justify-center gap-2">
+                            <AlertTriangle className="h-5 w-5 text-amber-400" />
+                            Hủy điểm danh
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <p className="text-sm text-[#E3E3D7]/60 text-center">
+                            Vui lòng cho biết lý do hủy. Admin sẽ nhận được thông báo.
+                        </p>
+                        <textarea
+                            value={cancelReason}
+                            onChange={(e) => setCancelReason(e.target.value)}
+                            placeholder="Nhập lý do hủy điểm danh..."
+                            className="w-full h-24 rounded-lg border border-[#A5C838]/20 bg-[#1a2b26] px-3 py-2 text-sm text-[#E3E3D7] placeholder:text-[#E3E3D7]/30 focus:outline-none focus:ring-2 focus:ring-[#046839]/30 resize-none"
+                        />
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setCancelDialog(false)}
+                                className="flex-1 h-10 rounded-lg border border-[#A5C838]/20 text-[#E3E3D7]/70 font-medium text-sm hover:bg-[#A5C838]/10 transition-colors"
+                            >
+                                Quay lại
+                            </button>
+                            <button
+                                onClick={handleCancelSubmit}
+                                disabled={cancelLoading || !cancelReason.trim()}
+                                className="flex-1 h-10 rounded-lg bg-red-600 text-white font-medium text-sm hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                            >
+                                {cancelLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+                                Xác nhận hủy
+                            </button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

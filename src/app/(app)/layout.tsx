@@ -22,10 +22,12 @@ import {
     ScrollText,
     Home,
     MessageCircle,
+    Trophy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+import Image from "next/image";
 
 interface NavItem {
     label: string;
@@ -35,6 +37,7 @@ interface NavItem {
 
 const memberNav: NavItem[] = [
     { label: "Lịch sân", href: "/calendar", icon: <Calendar className="h-5 w-5" /> },
+    { label: "Bảng xếp hạng", href: "/leaderboard", icon: <Trophy className="h-5 w-5" /> },
     { label: "Tài chính", href: "/me/finance", icon: <DollarSign className="h-5 w-5" /> },
     { label: "Lịch sử thanh toán", href: "/me/payments", icon: <CreditCard className="h-5 w-5" /> },
 ];
@@ -53,6 +56,7 @@ const adminNav: NavItem[] = [
 
 const memberBottomNav = [
     { label: "Lịch sân", href: "/calendar", icon: <Calendar className="h-5 w-5" /> },
+    { label: "Xếp hạng", href: "/leaderboard", icon: <Trophy className="h-5 w-5" /> },
     { label: "Tài chính", href: "/me/finance", icon: <DollarSign className="h-5 w-5" /> },
     { label: "Thanh toán", href: "/me/payments", icon: <CreditCard className="h-5 w-5" /> },
 ];
@@ -60,9 +64,9 @@ const memberBottomNav = [
 const adminBottomNav = [
     { label: "Tổng quan", href: "/admin/dashboard", icon: <Home className="h-5 w-5" /> },
     { label: "Lịch sân", href: "/calendar", icon: <Calendar className="h-5 w-5" /> },
+    { label: "Xếp hạng", href: "/leaderboard", icon: <Trophy className="h-5 w-5" /> },
     { label: "Buổi tập", href: "/admin/sessions", icon: <ClipboardList className="h-5 w-5" /> },
     { label: "Tính tiền", href: "/admin/billing", icon: <Receipt className="h-5 w-5" /> },
-    { label: "Log TT", href: "/admin/payment-logs", icon: <ScrollText className="h-5 w-5" /> },
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -118,8 +122,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             >
                 {/* Logo */}
                 <div className="p-5 flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-xl bg-[#046839] flex items-center justify-center shadow-lg shadow-[#046839]/30">
-                        <span className="text-lg">🏸</span>
+                    <div className="w-11 h-11 rounded-xl bg-[#046839] flex items-center justify-center shadow-lg shadow-[#046839]/30 overflow-hidden">
+                        <Image src="/logo-badminton.png" alt="Logo" width={44} height={44} className="object-cover" />
                     </div>
                     <div>
                         <h2 className="font-bold text-lg leading-tight text-[#A5C838]">
@@ -234,7 +238,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             {/* ===== MOBILE BOTTOM BAR ===== */}
             <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 safe-area-bottom">
                 <div className="h-[2px] bg-gradient-to-r from-[#046839] via-[#A5C838] to-[#046839]" />
-                <div className="bg-[#1a2b26]/97 backdrop-blur-xl border-t border-[#A5C838]/10">
+                <div className="bg-[rgb(35,54,48)] backdrop-blur-xl border-t border-[#A5C838]/10">
                     <div className="flex items-center justify-around h-16 px-1">
                         {bottomNavItems.map((item) => {
                             const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
@@ -245,8 +249,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                                     className={cn(
                                         "flex flex-col items-center justify-center gap-0.5 min-w-0 flex-1 px-1 py-1 rounded-xl transition-all duration-200",
                                         isActive
-                                            ? "text-[#A5C838]"
-                                            : "text-[#E3E3D7]/40 hover:text-[#E3E3D7]/70"
+                                            ? "text-[rgb(235,255,172)]"
+                                            : "text-[rgb(235,255,172)]/40 hover:text-[rgb(235,255,172)]/70"
                                     )}
                                 >
                                     <div className={cn(

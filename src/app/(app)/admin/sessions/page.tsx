@@ -102,7 +102,6 @@ export default function AdminSessionsPage() {
                                     <TableHead>Thời gian</TableHead>
                                     <TableHead>Phí sân</TableHead>
                                     <TableHead>Phí cầu</TableHead>
-                                    <TableHead>Pass</TableHead>
                                     <TableHead>Người</TableHead>
                                     <TableHead>Trạng thái</TableHead>
                                     <TableHead className="text-right">Thao tác</TableHead>
@@ -118,11 +117,6 @@ export default function AdminSessionsPage() {
                                         </TableCell>
                                         <TableCell className="font-mono">{formatCurrency(s.courtFee)}</TableCell>
                                         <TableCell className="font-mono">{formatCurrency(s.shuttleFee)}</TableCell>
-                                        <TableCell>
-                                            <Badge variant={s.passStatus === "SUCCESS" ? "success" : "outline"}>
-                                                {s.passStatus === "SUCCESS" ? "Thành công" : s.passStatus === "FAILED" ? "Thất bại" : s.passStatus === "TRYING" ? "Đang thử" : "Chưa"}
-                                            </Badge>
-                                        </TableCell>
                                         <TableCell>
                                             <Badge variant={s._count.attendances >= 4 ? "default" : "warning"}>
                                                 {s._count.attendances}
